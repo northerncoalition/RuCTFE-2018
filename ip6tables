@@ -1,0 +1,9 @@
+# /etc/sysconfig/ip6tables
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT DROP [0:0]
+
+-A INPUT -i lo -j ACCEPT
+-A INPUT -j DROP
+-A OUTPUT -o lo -j ACCEPT
+-A OUTPUT -j DROP

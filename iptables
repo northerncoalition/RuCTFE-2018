@@ -1,0 +1,38 @@
+# /etc/sysconfig/iptables
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT DROP [0:0]
+:ICMP_INPUT_ACCEPT - [0:0]
+:SVC_INPUT_ACCEPT - [0:0]
+
+## INPUT chain : accept loopback, incoming responses, approved pings and services ##
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+# Jump sur ICMP_INPUT_ACCEPT, SVC_INPUT_ACCEPT
+-A INPUT -p icmp --icmp-type echo-request -j ICMP_INPUT_ACCEPT
+-A INPUT -p icmp --icmp-type destination-unreachable -j ICMP_INPUT_ACCEPT
+-A INPUT -p icmp --icmp-type time-exceeded -j ICMP_INPUT_ACCEPT
+# ssh
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+# try custom services
+-A INPUT -j SVC_INPUT_ACCEPT
+# Sinon log & drop
+-A INPUT -j LOG --log-prefix "IPTABLES_INPUT_DROP: "
+-A INPUT -j DROP
+
+## ICMP_INPUT_ACCEPT chain ##
+-A ICMP_INPUT_ACCEPT -s 10.60.162.0/24 -p icmp -j ACCEPT
+-A ICMP_INPUT_ACCEPT -j DROP
+
+
+## OUTPUT chain: accepte loopback, outcoming responses, ping response and services ##
+-A OUTPUT -o lo -j ACCEPT
+-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT
+# DNS exemple
+-A OUTPUT -d 1.1.1.1/32 -p udp --dport 53 -j ACCEPT
+# Force outbound through proxy (yggdrasil.nosasquatch.ws:8080)
+-A OUTPUT -d 158.69.208.10/32 -p tcp --dport 8080 -j ACCEPT
+# Sinon log & drop
+-A OUTPUT -j LOG --log-prefix "IPTABLES_OUTPUT_DROP: "
+-A OUTPUT -j DROP
